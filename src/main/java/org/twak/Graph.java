@@ -2,7 +2,6 @@ package org.twak;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.microsoft.graph.logger.DefaultLogger;
@@ -50,12 +49,10 @@ public class Graph {
 
 		List<String> failedUsers = new ArrayList<>(  );
 
-		for ( DriveItem di : driveItem2.getCurrentPage() ) {
-
-				if ( di.name.compareTo( folderName ) == 0 )
-					folderToFix = di.id;
-
-//				System.out.println( ">>>" + di.name );
+		for ( DriveItem di : driveItem2.getCurrentPage() )
+			if ( di.name.compareTo( folderName ) == 0 ) {
+				folderToFix = di.id;
+				break;
 			}
 
 		if (folderToFix == null)
@@ -66,9 +63,6 @@ public class Graph {
 		for ( DriveItem file : driveItem2.getCurrentPage() ) {
 
 			String[] studentUsernames = file.name.substring( 0, file.name.indexOf( "." ) ).split( "_" );
-
-
-
 			List<DriveRecipient> students = new ArrayList<>(  );
 
 			for (String username : studentUsernames) {
@@ -79,20 +73,18 @@ public class Graph {
 
 					dr.email = u.userPrincipalName;
 					students.add( dr );
-				}
-				catch (Throwable th) {
+				} catch (Throwable th) {
 					failedUsers.add( username );
 					continue;
 				}
 			}
 
-
 			IPermissionCollectionPage iPermissionCollectionPage = graphClient.me().drive().items( file.id ).permissions().buildRequest().get();
 
-			for (Permission p : iPermissionCollectionPage.getCurrentPage() ) {
+			System.out.println(file.name+":");
+			for (Permission p : iPermissionCollectionPage.getCurrentPage() )
 				for (String r : p.roles)
-					System.out.println(">>> " + p.grantedTo.user.displayName +" is a " + r);
-			}
+					System.out.println( "  "+ p.grantedTo.user.displayName +" is a " + r);
 
 			graphClient.me().drive().items( file.id ).invite( true, Collections.singletonList( "read" ),
 					true, message, students ).buildRequest().post();
@@ -106,19 +98,6 @@ public class Graph {
 		System.out.println("failed names");
 		for (String s : failedUsers)
 			System.out.println(s);
-
-
-		//		ListItemCollectionPage lcp = l.items;
-
-//		for ( ListItem li : lcp.getCurrentPage() ) {
-//			System.out.println(">>> "+ li.name );
-//		}
-//
-//		lcp.getNextPage().buildRequest().get();
-
-//		while ()
-
-//		return me;
 	}
 
 	public static User getUser(String accessToken) {

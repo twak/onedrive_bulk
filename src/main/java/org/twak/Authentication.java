@@ -16,15 +16,13 @@ import com.microsoft.aad.msal4j.PublicClientApplication;
 
 
 /**
- * Authentication https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=3
+ * From https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=3
  */
 public class Authentication {
 
 	public static final String TEMP_TXT = "temp.txt";
 	public static final String AUTH = "auth";
 	private static String applicationId;
-	// Set authority to allow only organizational accounts
-	// Device code flow only supports organizational accounts
 	private final static String authority = "https://login.microsoftonline.com/common/";
 
 	public static String auth, oldKey;
@@ -59,8 +57,6 @@ public class Authentication {
 		ExecutorService pool = Executors.newFixedThreadPool(1);
 		PublicClientApplication app;
 		try {
-			// Build the MSAL application object with
-			// app ID and authority
 			app = PublicClientApplication.builder(applicationId)
 					.authority(authority)
 					.executorService(pool)
@@ -69,15 +65,10 @@ public class Authentication {
 			return null;
 		}
 
-		// Create consumer to receive the DeviceCode object
-		// This method gets executed during the flow and provides
-		// the URL the user logs into and the device code to enter
 		Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-			// Print the login information to the console
 			System.out.println(deviceCode.message());
 		};
 
-		// Request a token, passing the requested permission scopes
 		IAuthenticationResult result = app.acquireToken(
 				DeviceCodeFlowParameters
 						.builder(scopeSet, deviceCodeConsumer)
