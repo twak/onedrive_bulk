@@ -38,26 +38,17 @@ public class Graph {
 	public static void doDrive(String accessToken, String folderName, String message) {
 		ensureGraphClient(accessToken);
 
-		// GET /me to get authenticated user
-		User me = graphClient
-				.me()
-				.buildRequest()
-				.get();
-
-
 		IDriveCollectionPage list = graphClient.drives().buildRequest().get();
 		for (Drive dd : list.getCurrentPage() ) {
 			System.out.println("drive available: "+ dd.name + "  " + dd.driveType);
 		}
 
-//		graphClient.drive().buildRequest().get();
-//		Drive d = graphClient.me().drive().buildRequest().get();
-//		System.out.println("using drive "+d.name);
-
 		DriveItem driveItem = graphClient.me().drive().root().buildRequest().get();
 		IDriveItemCollectionPage driveItem2 = graphClient.me().drive().items(driveItem.id).children().buildRequest().get();
 
 		String folderToFix = null;
+
+		List<String> failedUsers = new ArrayList<>(  );
 
 		for ( DriveItem di : driveItem2.getCurrentPage() ) {
 
@@ -81,18 +72,20 @@ public class Graph {
 			List<DriveRecipient> students = new ArrayList<>(  );
 
 			for (String username : studentUsernames) {
+				DriveRecipient dr = new DriveRecipient();
 
-				{
-					DriveRecipient dr = new DriveRecipient();
-
-					User u = graphClient.users( username+"@leeds.ac.uk" ).buildRequest().get();
+				try {
+					User u = graphClient.users( username + "@leeds.ac.uk" ).buildRequest().get();
 
 					dr.email = u.userPrincipalName;
-//					dr.alias = dr.email;
-//					dr.objectId = u.id;
 					students.add( dr );
 				}
+				catch (Throwable th) {
+					failedUsers.add( username );
+					continue;
+				}
 			}
+
 
 			IPermissionCollectionPage iPermissionCollectionPage = graphClient.me().drive().items( file.id ).permissions().buildRequest().get();
 
@@ -110,6 +103,9 @@ public class Graph {
 			throw new Error("fixme!");
 
 
+		System.out.println("failed names");
+		for (String s : failedUsers)
+			System.out.println(s);
 
 
 		//		ListItemCollectionPage lcp = l.items;

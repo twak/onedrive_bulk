@@ -2,13 +2,15 @@ package org.twak;
 
 import com.microsoft.graph.models.extensions.User;
 
-import java.util.InputMismatchException;
-import java.util.Scanner;
 import java.io.IOException;
 import java.util.Properties;
 
 /**
- * Graph Tutorial
+ * Bulk permission setting thing for OneDrive
+ *
+ * You should have a file src/resources/oAuth.properties with the following contents.
+ * app.id={from dashboard}
+ * app.scopes=User.Read,Files.ReadWrite,User.ReadBasic.All
  *
  */
 public class Bulk {
@@ -35,43 +37,6 @@ public class Bulk {
 		User user = Graph.getUser(accessToken);
 		System.out.println("Working in the name of: " + user.displayName);
 
-		Graph.doDrive( accessToken, "toemail", "" );
-
-		Scanner input = new Scanner(System.in);
-
-		int choice = -1;
-
-		while (choice != 0) {
-			System.out.println("Please choose one of the following options:");
-			System.out.println("0. Exit");
-			System.out.println("1. Display access token");
-			System.out.println("2. List calendar events");
-
-			try {
-				choice = input.nextInt();
-			} catch (InputMismatchException ex) {
-				// Skip over non-integer input
-				input.nextLine();
-			}
-
-			// Process user choice
-			switch(choice) {
-			case 0:
-				// Exit the program
-				System.out.println("Goodbye...");
-				break;
-			case 1:
-				System.out.println("Access token: " + accessToken);
-
-				break;
-			case 2:
-				// List the calendar
-				break;
-			default:
-				System.out.println("Invalid choice");
-			}
-		}
-
-		input.close();
+		Graph.doDrive( accessToken, "toemail", "Ignore this, tom is testing a script to share feedback files with students." );
 	}
 }
