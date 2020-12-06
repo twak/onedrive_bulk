@@ -19,6 +19,7 @@ public class Graph {
 
 	private static void ensureGraphClient(String accessToken) {
 		if (graphClient == null) {
+
 			// Create the auth provider
 			authProvider = new SimpleAuthProvider(accessToken);
 
@@ -34,13 +35,12 @@ public class Graph {
 		}
 	}
 
-	public static void doDrive(String accessToken, String folderName, String message) {
+	public static void doDrive( String accessToken, String folderName, String message, String emailDomain ) {
 		ensureGraphClient(accessToken);
 
 		IDriveCollectionPage list = graphClient.drives().buildRequest().get();
-		for (Drive dd : list.getCurrentPage() ) {
+		for (Drive dd : list.getCurrentPage() )
 			System.out.println("drive available: "+ dd.name + "  " + dd.driveType);
-		}
 
 		DriveItem driveItem = graphClient.me().drive().root().buildRequest().get();
 		IDriveItemCollectionPage driveItem2 = graphClient.me().drive().items(driveItem.id).children().buildRequest().get();
@@ -56,12 +56,13 @@ public class Graph {
 			}
 
 		if (folderToFix == null)
-			throw new Error("Didn't find folder toFix!");
+			throw new Error("Didn't find folder "+folderName+"!");
 
 		driveItem2 = graphClient.me().drive().items(folderToFix).children().buildRequest().get();
 
 		for ( DriveItem file : driveItem2.getCurrentPage() ) {
 
+			System.out.println("\n"+file.name);
 			String[] studentUsernames = file.name.substring( 0, file.name.indexOf( "." ) ).split( "_" );
 			List<DriveRecipient> students = new ArrayList<>(  );
 
@@ -69,7 +70,7 @@ public class Graph {
 				DriveRecipient dr = new DriveRecipient();
 
 				try {
-					User u = graphClient.users( username + "@leeds.ac.uk" ).buildRequest().get();
+					User u = graphClient.users( username + "@"+ emailDomain ).buildRequest().get();
 
 					dr.email = u.userPrincipalName;
 					students.add( dr );
@@ -81,7 +82,6 @@ public class Graph {
 
 			IPermissionCollectionPage iPermissionCollectionPage = graphClient.me().drive().items( file.id ).permissions().buildRequest().get();
 
-			System.out.println(file.name+":");
 			for (Permission p : iPermissionCollectionPage.getCurrentPage() )
 				for (String r : p.roles)
 					System.out.println( "  "+ p.grantedTo.user.displayName +" is a " + r);
@@ -95,7 +95,7 @@ public class Graph {
 			throw new Error("fixme!");
 
 
-		System.out.println("failed names");
+		System.out.println("failed names:");
 		for (String s : failedUsers)
 			System.out.println(s);
 	}
@@ -103,7 +103,6 @@ public class Graph {
 	public static User getUser(String accessToken) {
 		ensureGraphClient(accessToken);
 
-		// GET /me to get authenticated user
 		User me = graphClient
 				.me()
 				.buildRequest()

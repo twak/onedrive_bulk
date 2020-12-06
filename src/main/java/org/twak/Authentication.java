@@ -13,7 +13,7 @@ import com.microsoft.aad.msal4j.DeviceCode;
 import com.microsoft.aad.msal4j.DeviceCodeFlowParameters;
 import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
-
+import com.microsoft.graph.models.extensions.User;
 
 /**
  * From https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=3
@@ -41,10 +41,37 @@ public class Authentication {
 		}
 	}
 
+	public static String readPropertiesAndGetUserAccessToken() {
+
+		// Load OAuth settings
+		final Properties oAuthProperties = new Properties();
+		try {
+			oAuthProperties.load(Bulk.class.getResourceAsStream("/oAuth.properties"));
+		} catch (IOException e) {
+			System.out.println("Unable to read OAuth configuration. Make sure you have a properly formatted oAuth.properties file. See README for details.");
+			return null;
+		}
+
+		final String appId = oAuthProperties.getProperty("app.id");
+		final String[] appScopes = oAuthProperties.getProperty("app.scopes").split(",");
+
+		// Get an access token
+		Authentication.initialize(appId);
+		return Authentication.getUserAccessToken(appScopes);
+	}
+
 	public static String getUserAccessToken(String[] scopes) {
 		if (applicationId == null) {
 			System.out.println("You must initialize Authentication before calling getUserAccessToken");
 			return null;
+		}
+
+		try {
+			User user = Graph.getUser( oldKey );
+			System.out.println("In the name of: " + user.displayName);
+		} catch ( Throwable th ) {
+			System.out.println("failed to use saved key. Reapplying.");
+			oldKey = null;
 		}
 
 		if (oldKey != null)
