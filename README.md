@@ -14,7 +14,7 @@ It will give the named users access to those files - sending them an email with 
 Graph.doDrive( accessToken, "toemail", "message" );
 ```
 
-You will need to set up a new app as [here](https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=2) - I had to set "Allow public client flows" toggle at the bottom of the Authentication page. You will then need add the client and setup the [oAuth.properties as here](https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=3). Hardcoded for leeds.ac.uk. Sorry about the Java.
+You will need to set up a new app as [here](https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=2) - I had to set "Allow public client flows" toggle at the bottom of the Authentication page. You will then need add the client and setup the `oAuth.properties` file [as here](https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=3). Sorry about the Java.
 
 Will write out a `temp.txt` with your secret auth token - delete this when permissions start failing.
 
