@@ -1,10 +1,10 @@
 # bulk permission setter for OneDrive
 
-Leeds' Minerva lacks the ability to return complex feedback in bulk. The idea here is to write a bunch of zip files named for the usernames and upload them to onedrive - then run this script to allow the named student(s) permission to view the file. Also messages the students.
+Leeds' Minerva lacks the ability to return complex feedback in bulk. Given a bunch of zip files (named for the usernames sc99xx@leeds.ac.uk) on onedrive - then run this script to allow the named student(s) permission to view the file. Also messages the students.
 
 If you call `Graph.doDrive` (as in Bulk.java) it will set access permisions for all the files in the given top-level OneDrive folder from their usernames. Not well tested. 
 
-for example if you have a folder called `toemail` containing:
+for example if you have a top-level OneDrive folder called `toemail` containing:
 ```
    scsxxx_sc19yyy_sc17zzz.zip 
    scsxxx.zip
