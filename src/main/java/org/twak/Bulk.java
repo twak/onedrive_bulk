@@ -1,25 +1,23 @@
 package org.twak;
 
-import com.microsoft.graph.models.extensions.User;
+//import com.microsoft.graph.models.extensions.User;
 
 import java.io.IOException;
 import java.util.Properties;
 
 /**
- * Bulk permission setting thing for OneDrive
- *
- * You should have a file src/resources/oAuth.properties with the following contents.
- * app.id={from dashboard}
- * app.scopes=User.Read,Files.ReadWrite,User.ReadBasic.All
- *
+ * Bulk permissions for OneDrive
  */
 public class Bulk {
 	public static void main(String[] args) {
-		System.out.println("Java Graph Tutorial");
-		System.out.println();
 
-		String accessToken = Authentication.readPropertiesAndGetUserAccessToken();
+//		new Authentication().getUserAccessToken();
 
-		Graph.doDrive( accessToken, "toemail", "Ignore this, tom is testing a script to share feedback files with students.", "leeds.ac.uk" );
+//		System.out.println(accessToken);
+
+		new Graph (new Authentication("0xdeadbeef"), // "Application (client) ID " from ms graph https://docs.microsoft.com/en-us/graph/tutorials/java?tutorial-step=2
+				"cw2_results_2021",
+				"This file on OneDrive contains your 2811 coursework 2 feedback. Download and unzip the folder and open in a browser such as Chrome.",
+				"leeds.ac.uk" );
 	}
 }

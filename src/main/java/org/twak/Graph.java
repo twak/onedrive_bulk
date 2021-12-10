@@ -6,108 +6,109 @@ import java.util.List;
 
 import com.microsoft.graph.logger.DefaultLogger;
 import com.microsoft.graph.logger.LoggerLevel;
-import com.microsoft.graph.models.extensions.*;
-import com.microsoft.graph.requests.extensions.*;
+import com.microsoft.graph.models.*;
+import com.microsoft.graph.requests.DriveCollectionPage;
+import com.microsoft.graph.requests.DriveItemCollectionPage;
+import com.microsoft.graph.requests.PermissionCollectionPage;
 
-/**
- * Graph
- */
 public class Graph {
 
-	private static IGraphServiceClient graphClient = null;
-	private static SimpleAuthProvider authProvider = null;
+	private  Authentication auth;
 
-	private static void ensureGraphClient(String accessToken) {
-		if (graphClient == null) {
+	public Graph( Authentication auth, String folderName, String message, String emailDomain ) {
 
-			// Create the auth provider
-			authProvider = new SimpleAuthProvider(accessToken);
+		this.auth = auth;
 
-			// Create default logger to only log errors
-			DefaultLogger logger = new DefaultLogger();
-			logger.setLoggingLevel(LoggerLevel.ERROR);
+		DriveCollectionPage list = auth.graphClient.drives().buildRequest().get();
+		for (Drive dd : list.getCurrentPage())
+			System.out.println("drive available: " + dd.name + "  " + dd.driveType);
 
-			// Build a Graph client
-			graphClient = GraphServiceClient.builder()
-					.authenticationProvider(authProvider)
-					.logger(logger)
-					.buildClient();
-		}
-	}
-
-	public static void doDrive( String accessToken, String folderName, String message, String emailDomain ) {
-		ensureGraphClient(accessToken);
-
-		IDriveCollectionPage list = graphClient.drives().buildRequest().get();
-		for (Drive dd : list.getCurrentPage() )
-			System.out.println("drive available: "+ dd.name + "  " + dd.driveType);
-
-		DriveItem driveItem = graphClient.me().drive().root().buildRequest().get();
-		IDriveItemCollectionPage driveItem2 = graphClient.me().drive().items(driveItem.id).children().buildRequest().get();
+		DriveItem driveItem = auth.graphClient.me().drive().root().buildRequest().get();
+		DriveItemCollectionPage driveItem2 = auth.graphClient.me().drive().items(driveItem.id).children().buildRequest().get();
 
 		String folderToFix = null;
 
-		List<String> failedUsers = new ArrayList<>(  );
+		List<String> failedUsers = new ArrayList<>();
 
-		for ( DriveItem di : driveItem2.getCurrentPage() )
-			if ( di.name.compareTo( folderName ) == 0 ) {
+		for (DriveItem di : driveItem2.getCurrentPage())
+			if (di.name.compareTo(folderName) == 0) {
 				folderToFix = di.id;
 				break;
 			}
 
 		if (folderToFix == null)
-			throw new Error("Didn't find folder "+folderName+"!");
+			throw new Error("Didn't find folder " + folderName + "!");
 
-		driveItem2 = graphClient.me().drive().items(folderToFix).children().buildRequest().get();
+		driveItem2 = auth.graphClient.me().drive().items(folderToFix).children().buildRequest().get();
 
-		for ( DriveItem file : driveItem2.getCurrentPage() ) {
+		do {
 
-			System.out.println("\n"+file.name);
-			String[] studentUsernames = file.name.substring( 0, file.name.indexOf( "." ) ).split( "_" );
-			List<DriveRecipient> students = new ArrayList<>(  );
+			file:
+			for (DriveItem file : driveItem2.getCurrentPage()) {
 
-			for (String username : studentUsernames) {
-				DriveRecipient dr = new DriveRecipient();
+				System.out.println("\n" + file.name);
+				String allNames = file.name;
 
-				try {
-					User u = graphClient.users( username + "@"+ emailDomain ).buildRequest().get();
+				if (file.name.contains(".zip"))
+					allNames = file.name.substring(0, file.name.indexOf("."));
 
-					dr.email = u.userPrincipalName;
-					students.add( dr );
-				} catch (Throwable th) {
-					failedUsers.add( username );
-					continue;
+				String[] studentUsernames = allNames.split("_");
+
+				List<DriveRecipient> students = new ArrayList<>();
+
+				for (String username : studentUsernames) {
+					DriveRecipient dr = new DriveRecipient();
+
+					try {
+						User u = auth.graphClient.users(username + "@" + emailDomain).buildRequest().get();
+
+						dr.email = u.userPrincipalName;
+						students.add(dr);
+					} catch (Throwable th) {
+						failedUsers.add(username);
+						continue;
+					}
 				}
+
+				PermissionCollectionPage iPermissionCollectionPage = auth.graphClient.me().drive().items(file.id).permissions().buildRequest().get();
+
+				boolean skip = false;
+
+				for (Permission p : iPermissionCollectionPage.getCurrentPage()) {
+
+					for (String r : p.roles)
+						System.out.println("  " + p.grantedTo.user.displayName + " is a " + r);
+
+
+					for (String s : studentUsernames)
+						if (p.grantedTo.user.displayName.contains(s))
+							skip = true;
+				}
+
+				if (skip)
+					continue file;
+
+				DriveItemInviteParameterSet invite = new DriveItemInviteParameterSet();
+				invite.message = message;
+				invite.roles = Collections.singletonList("read");
+				invite.sendInvitation = true;
+				invite.recipients = students;
+				invite.requireSignIn = true;
+
+				auth.graphClient.me().drive().items(file.id).invite(invite).buildRequest().post();
 			}
 
-			IPermissionCollectionPage iPermissionCollectionPage = graphClient.me().drive().items( file.id ).permissions().buildRequest().get();
+			if (driveItem2.getNextPage() != null)
+				driveItem2 = driveItem2.getNextPage().buildRequest().get();
+			else
+				driveItem2 = null;
 
-			for (Permission p : iPermissionCollectionPage.getCurrentPage() )
-				for (String r : p.roles)
-					System.out.println( "  "+ p.grantedTo.user.displayName +" is a " + r);
+		} while (driveItem2 != null);
 
-			graphClient.me().drive().items( file.id ).invite( true, Collections.singletonList( "read" ),
-					true, message, students ).buildRequest().post();
-
-		}
-
-		if (driveItem2.getNextPage() != null)
-			throw new Error("fixme!");
 
 
 		System.out.println("failed names:");
 		for (String s : failedUsers)
 			System.out.println(s);
-	}
-
-	public static User getUser(String accessToken) {
-		ensureGraphClient(accessToken);
-
-		User me = graphClient
-				.me()
-				.buildRequest()
-				.get();
-
-		return me;
 	}
 }
