@@ -81,8 +81,10 @@ public class Graph {
 
 
 					for (String s : studentUsernames)
-						if (p.grantedTo.user.displayName.contains(s))
+						if (p.grantedTo.user.displayName.contains(s)) {
 							skip = true;
+							System.out.println("permissions already set");
+						}
 				}
 
 				if (skip)
@@ -105,10 +107,10 @@ public class Graph {
 
 		} while (driveItem2 != null);
 
-
-
-		System.out.println("failed names:");
-		for (String s : failedUsers)
-			System.out.println(s);
+		if (!failedUsers.isEmpty()) {
+			System.out.println("failed to share files:");
+			for (String s : failedUsers)
+				System.out.println(s);
+		}
 	}
 }
